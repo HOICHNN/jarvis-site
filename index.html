@@ -7,16 +7,16 @@
 <meta name="description" content="Джарвис — офлайн-голосовой ассистент для Windows: запускает программы и игры, рассказывает погоду и новости, делает скриншоты. Без интернета тоже работает.">
 <style>
   :root {
-    --bg: #05070f;
-    --panel: #0a0f1c;
-    --panel-2: #111a2c;
-    --text: #eaf1ff;
-    --muted: #7b8aa8;
-    --accent: #ffc46b;
-    --accent-2: #9db8ff;
+    --bg: #0a1526;
+    --panel: #101d33;
+    --panel-2: #16263f;
+    --text: #e8f0ff;
+    --muted: #8fa3c4;
+    --accent: #3a86ff;
+    --accent-2: #7aa7ff;
     --good: #3ce08a;
     --danger: #ff7185;
-    --line: rgba(155, 184, 255, 0.14);
+    --line: rgba(122, 167, 255, 0.16);
     --radius: 18px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,7 +32,7 @@
 
   header.nav {
     position: sticky; top: 0; z-index: 20;
-    background: rgba(5, 7, 15, 0.82);
+    background: rgba(10, 21, 38, 0.85);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--line);
   }
@@ -47,7 +47,7 @@
   .hero::before {
     content: ""; position: absolute; inset: -40% -20% auto; height: 80%;
     background:
-      radial-gradient(600px 300px at 70% 20%, rgba(255, 196, 107, 0.12), transparent 60%),
+      radial-gradient(600px 300px at 70% 20%, rgba(58, 134, 255, 0.14), transparent 60%),
       radial-gradient(500px 260px at 25% 30%, rgba(157, 184, 255, 0.14), transparent 60%);
     pointer-events: none;
   }
@@ -55,7 +55,7 @@
   .hero .orb .core {
     position: absolute; inset: 14px; border-radius: 50%;
     background: radial-gradient(circle at 35% 30%, #fff, var(--accent) 55%, #b8742f);
-    box-shadow: 0 0 40px rgba(255, 196, 107, 0.55);
+    box-shadow: 0 0 40px rgba(58, 134, 255, 0.55);
   }
   .hero .orb .ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--accent-2); opacity: .55; }
   .hero .orb .ring.r2 { transform: rotate(70deg) scale(0.85, 1.4); border-color: var(--accent); }
@@ -68,8 +68,8 @@
     display: inline-block; padding: 14px 30px; border-radius: 999px;
     font-size: 16px; font-weight: 600; text-decoration: none; transition: transform .15s, box-shadow .2s;
   }
-  .btn.primary { background: var(--accent); color: #1a1204; box-shadow: 0 6px 24px rgba(255, 196, 107, 0.3); }
-  .btn.primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(255, 196, 107, 0.4); }
+  .btn.primary { background: var(--accent); color: #ffffff; box-shadow: 0 6px 24px rgba(58, 134, 255, 0.35); }
+  .btn.primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(58, 134, 255, 0.45); }
   .btn.ghost { border: 1px solid var(--line); color: var(--text); }
   .btn.ghost:hover { border-color: var(--accent-2); }
   .hero .hint { margin-top: 16px; font-size: 13px; color: var(--muted); }
@@ -86,8 +86,8 @@
     background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius);
     padding: 26px; transition: transform .18s, border-color .2s;
   }
-  .card:hover { transform: translateY(-4px); border-color: rgba(255, 196, 107, 0.4); }
-  .card .icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 16px; background: rgba(255, 196, 107, 0.12); }
+  .card:hover { transform: translateY(-4px); border-color: rgba(58, 134, 255, 0.45); }
+  .card .icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 16px; background: rgba(58, 134, 255, 0.14); }
   .card h3 { font-size: 18px; margin-bottom: 8px; }
   .card p { color: var(--muted); font-size: 14.5px; }
   .card .tag { display: inline-block; margin-top: 12px; font-size: 12px; color: var(--good); }
@@ -118,17 +118,24 @@
 
   .pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 860px; margin: 0 auto; }
   .pick-card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 22px; padding: 30px 26px; text-align: center; transition: transform .18s, border-color .2s; }
-  .pick-card:hover { transform: translateY(-4px); border-color: rgba(255, 196, 107, 0.45); }
+  .pick-card:hover { transform: translateY(-4px); border-color: rgba(58, 134, 255, 0.5); }
   .pick-card .dev { font-size: 44px; margin-bottom: 12px; }
   .pick-card h3 { font-size: 20px; margin-bottom: 8px; }
   .pick-card p { color: var(--muted); font-size: 14px; margin-bottom: 20px; min-height: 44px; }
   .pick-card .size { display: block; font-size: 12px; color: var(--muted); margin-top: 10px; }
   .pick-card .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; margin-bottom: 14px; }
-  .tag.win { background: rgba(255, 196, 107, 0.15); color: var(--accent); }
+  .tag.win { background: rgba(58, 134, 255, 0.18); color: var(--accent); }
   .tag.mob { background: rgba(60, 224, 138, 0.15); color: var(--good); }
 
   footer { border-top: 1px solid var(--line); padding: 36px 0 48px; color: var(--muted); font-size: 13px; text-align: center; }
   footer .brand { justify-content: center; margin-bottom: 10px; }
+
+
+  .ad-video {
+    width: 100%; max-width: 960px; display: block; margin: 0 auto;
+    border-radius: var(--radius); border: 1px solid var(--line);
+    background: #050d1a; box-shadow: 0 18px 50px rgba(0, 20, 60, 0.55);
+  }
 
   @media (max-width: 720px) {
     .nav-links { display: none; }
@@ -149,8 +156,7 @@
   <div class="wrap nav-inner">
     <div class="brand"><span class="dot"></span>JARVIS</div>
     <nav class="nav-links">
-      <a href="#features">Возможности</a>
-      <a href="#themes">Темы</a>
+      <a href="#ad">Реклама</a>
       <a href="#voice">Голос</a>
       <a href="#commands">Команды</a>
       <a href="#download">Скачать</a>
@@ -173,6 +179,18 @@
       <a class="btn ghost" href="#download">Скачать для Windows ↓</a>
     </div>
     <div class="hint">Windows 10/11 · Без регистрации и аккаунтов</div>
+  </div>
+</section>
+
+<section class="alt" id="ad">
+  <div class="wrap">
+    <div class="eyebrow">Реклама</div>
+    <h2>Джарвис за 50 секунд</h2>
+    <p class="lead">Короткий ролик: что умеет ассистент, какие команды понимает и как выглядит.</p>
+    <video class="ad-video" controls preload="metadata" poster="poster.jpg" playsinline>
+      <source src="https://github.com/HOICHNN/jarvis-site/releases/download/v1.0/jarvis-ad.mp4" type="video/mp4">
+      Ваш браузер не поддерживает видео.
+    </video>
   </div>
 </section>
 
