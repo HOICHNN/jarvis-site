@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Джарвис — голосовой ассистент для Windows</title>
+<meta name="description" content="Джарвис — офлайн-голосовой ассистент для Windows: запускает программы и игры, рассказывает погоду и новости, делает скриншоты. Без интернета тоже работает.">
+<style>
+  :root {
+    --bg: #05070f;
+    --panel: #0a0f1c;
+    --panel-2: #111a2c;
+    --text: #eaf1ff;
+    --muted: #7b8aa8;
+    --accent: #ffc46b;
+    --accent-2: #9db8ff;
+    --good: #3ce08a;
+    --danger: #ff7185;
+    --line: rgba(155, 184, 255, 0.14);
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  header.nav {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(5, 7, 15, 0.82);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner { display: flex; align-items: center; gap: 28px; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: 2px; font-size: 17px; }
+  .brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+  .nav-links { display: flex; gap: 22px; margin-left: auto; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color .2s; }
+  .nav-links a:hover { color: var(--text); }
+
+  .hero { padding: 88px 0 64px; text-align: center; position: relative; overflow: hidden; }
+  .hero::before {
+    content: ""; position: absolute; inset: -40% -20% auto; height: 80%;
+    background:
+      radial-gradient(600px 300px at 70% 20%, rgba(255, 196, 107, 0.12), transparent 60%),
+      radial-gradient(500px 260px at 25% 30%, rgba(157, 184, 255, 0.14), transparent 60%);
+    pointer-events: none;
+  }
+  .hero .orb { position: relative; width: 120px; height: 120px; margin: 0 auto 28px; }
+  .hero .orb .core {
+    position: absolute; inset: 14px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff, var(--accent) 55%, #b8742f);
+    box-shadow: 0 0 40px rgba(255, 196, 107, 0.55);
+  }
+  .hero .orb .ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--accent-2); opacity: .55; }
+  .hero .orb .ring.r2 { transform: rotate(70deg) scale(0.85, 1.4); border-color: var(--accent); }
+  .hero .orb .ring.r3 { transform: rotate(-40deg) scale(0.7, 1.7); border-color: var(--accent-2); opacity: .35; }
+  .hero h1 { font-size: clamp(34px, 6vw, 58px); font-weight: 800; letter-spacing: 0.5px; line-height: 1.12; }
+  .hero h1 .grad { background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero .sub { margin: 20px auto 0; max-width: 640px; color: var(--muted); font-size: 18px; }
+  .hero .cta { display: flex; gap: 14px; justify-content: center; margin-top: 34px; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: 14px 30px; border-radius: 999px;
+    font-size: 16px; font-weight: 600; text-decoration: none; transition: transform .15s, box-shadow .2s;
+  }
+  .btn.primary { background: var(--accent); color: #1a1204; box-shadow: 0 6px 24px rgba(255, 196, 107, 0.3); }
+  .btn.primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(255, 196, 107, 0.4); }
+  .btn.ghost { border: 1px solid var(--line); color: var(--text); }
+  .btn.ghost:hover { border-color: var(--accent-2); }
+  .hero .hint { margin-top: 16px; font-size: 13px; color: var(--muted); }
+
+  section { padding: 72px 0; }
+  section.alt { background: var(--panel); }
+  .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); }
+  h2 { font-size: clamp(26px, 4vw, 38px); font-weight: 800; margin: 10px 0 14px; }
+  .lead { color: var(--muted); max-width: 680px; font-size: 17px; margin-bottom: 40px; }
+
+  .grid { display: grid; gap: 18px; }
+  .features { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .card {
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 26px; transition: transform .18s, border-color .2s;
+  }
+  .card:hover { transform: translateY(-4px); border-color: rgba(255, 196, 107, 0.4); }
+  .card .icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 16px; background: rgba(255, 196, 107, 0.12); }
+  .card h3 { font-size: 18px; margin-bottom: 8px; }
+  .card p { color: var(--muted); font-size: 14.5px; }
+  .card .tag { display: inline-block; margin-top: 12px; font-size: 12px; color: var(--good); }
+
+  .themes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .theme { border-radius: var(--radius); padding: 20px; border: 1px solid var(--line); display: flex; align-items: center; gap: 16px; background: var(--panel-2); }
+  .theme .sw { min-width: 56px; height: 56px; border-radius: 14px; border: 2px solid rgba(255,255,255,0.08); position: relative; overflow: hidden; }
+  .theme .sw .o { position: absolute; width: 26px; height: 26px; border-radius: 50%; left: 50%; top: 50%; transform: translate(-50%,-50%); }
+  .theme h4 { font-size: 15px; }
+  .theme p { color: var(--muted); font-size: 13px; }
+
+  .voice { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+  .voice .card h3 { display: flex; align-items: center; gap: 8px; }
+  .badge { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+  .badge.live { background: rgba(60, 224, 138, 0.15); color: var(--good); }
+  .badge.off { background: rgba(157, 184, 255, 0.14); color: var(--accent-2); }
+
+  .commands { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px 26px; }
+  .cmd { display: flex; gap: 14px; align-items: baseline; }
+  .cmd code { color: var(--accent); font-family: Consolas, monospace; font-size: 14.5px; white-space: nowrap; }
+  .cmd span { color: var(--muted); font-size: 14px; }
+
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; counter-reset: step; }
+  .step { position: relative; padding: 22px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2); }
+  .step::before { counter-increment: step; content: counter(step); position: absolute; top: 16px; right: 18px; font-size: 34px; font-weight: 800; color: rgba(255,196,107,0.18); }
+  .step h4 { margin-bottom: 6px; font-size: 16px; }
+  .step p { color: var(--muted); font-size: 14px; }
+
+  .pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 860px; margin: 0 auto; }
+  .pick-card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 22px; padding: 30px 26px; text-align: center; transition: transform .18s, border-color .2s; }
+  .pick-card:hover { transform: translateY(-4px); border-color: rgba(255, 196, 107, 0.45); }
+  .pick-card .dev { font-size: 44px; margin-bottom: 12px; }
+  .pick-card h3 { font-size: 20px; margin-bottom: 8px; }
+  .pick-card p { color: var(--muted); font-size: 14px; margin-bottom: 20px; min-height: 44px; }
+  .pick-card .size { display: block; font-size: 12px; color: var(--muted); margin-top: 10px; }
+  .pick-card .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; margin-bottom: 14px; }
+  .tag.win { background: rgba(255, 196, 107, 0.15); color: var(--accent); }
+  .tag.mob { background: rgba(60, 224, 138, 0.15); color: var(--good); }
+
+  footer { border-top: 1px solid var(--line); padding: 36px 0 48px; color: var(--muted); font-size: 13px; text-align: center; }
+  footer .brand { justify-content: center; margin-bottom: 10px; }
+
+  @media (max-width: 720px) {
+    .nav-links { display: none; }
+    .hero { padding: 64px 0 48px; }
+    section { padding: 52px 0; }
+    .cmd code { white-space: normal; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .hero .orb .ring { animation: none !important; }
+    .card, .step, .theme { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <div class="brand"><span class="dot"></span>JARVIS</div>
+    <nav class="nav-links">
+      <a href="#features">Возможности</a>
+      <a href="#themes">Темы</a>
+      <a href="#voice">Голос</a>
+      <a href="#commands">Команды</a>
+      <a href="#download">Скачать</a>
+      <a href="#start">Установка</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="orb">
+      <div class="ring"></div>
+      <div class="ring r2"></div>
+      <div class="ring r3"></div>
+      <div class="core"></div>
+    </div>
+    <h1>Ваш голосовой <span class="grad">Джарвис</span></h1>
+    <p class="sub">Портативный голосовой ассистент для Windows. Скажите имя — и он запустит игры, расскажет погоду и новости, сделает скриншот и выключит компьютер. Работает без интернета и без установки.</p>
+    <div class="cta">
+      <a class="btn ghost" href="#download">Выберите свою версию ↓</a>
+    </div>
+    <div class="hint">ПК · Телефон · Без регистрации и аккаунтов</div>
+  </div>
+</section>
+
+<section class="alt" id="download">
+  <div class="wrap">
+    <div class="eyebrow">Скачать</div>
+    <h2>Выберите версию</h2>
+    <p class="lead">Джарвис есть для компьютера и для телефона — выбирайте своё устройство.</p>
+    <div class="pick">
+      <div class="pick-card">
+        <span class="tag win">Windows · ПК</span>
+        <div class="dev">🖥️</div>
+        <h3>Джарвис для ПК</h3>
+        <p>Полный ассистент: запускает игры и программы, скриншоты, новости, темы, управление звуком и питанием. Работает офлайн.</p>
+        <a class="btn primary" href="https://github.com/HOICHNN/jarvis-site/releases/download/v1.0/jarvis-portable.zip" download>Скачать для ПК</a>
+        <span class="size">ZIP · 91 МБ · Windows 10/11</span>
+      </div>
+      <div class="pick-card">
+        <span class="tag mob">Android · iPhone</span>
+        <div class="dev">📱</div>
+        <h3>Джарвис Mobile</h3>
+        <p>Голосовой ассистент для телефона: время, дата, погода, счёт, разговор. Устанавливается на главный экран как приложение.</p>
+        <a class="btn primary" href="download/jarvis-mobile.zip" download>Скачать для телефона</a>
+        <span class="size">ZIP · 29 КБ · работает в Chrome</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="eyebrow">Возможности</div>
+    <h2>Голос управляет компьютером</h2>
+    <p class="lead">Джарвис слушает постоянно, распознаёт команду и выполняет её — руками ничего нажимать не нужно.</p>
+    <div class="grid features">
+      <div class="card">
+        <div class="icon">🎮</div>
+        <h3>Запуск игр и программ</h3>
+        <p>«Джарвис, запусти стим» — найдёт игру или приложение на компьютере и откроет его. Браузер, блокнот, Telegram, Steam и сотни других программ.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🌦️</div>
+        <h3>Погода и новости</h3>
+        <p>«Какая погода?» — расскажет погоду в вашем городе на сегодня и завтра. «Новости» — озвучит главные заголовки. Результаты кэшируются и работают даже без сети.</p>
+      </div>
+      <div class="card">
+        <div class="icon">📸</div>
+        <h3>Скриншот голосом</h3>
+        <p>«Джарвис, сделай скриншот» — снимок экрана сохраняется в папку, и Джарвис скажет, как файл называется.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🔊</div>
+        <h3>Звук и медиа</h3>
+        <p>«Сделай тише», «громче», «пауза», «следующий трек» — управление громкостью и плеером без мыши.</p>
+      </div>
+      <div class="card">
+        <div class="icon">⏸️</div>
+        <h3>Режимы одним словом</h3>
+        <p>«Джарвис, доброе утро» — погода и новости одним заходом. «Режим игра» — откроет Steam и Discord одновременно.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🖥️</div>
+        <h3>Выключение и перезагрузка</h3>
+        <p>«Выключи компьютер» — ассистент запустит выключение и оставит время остановить его командой «отмена».</p>
+      </div>
+      <div class="card">
+        <div class="icon">🧠</div>
+        <h3>Умное распознавание</h3>
+        <p>Локальная модель речи (Vosk) — распознавание работает без облака. Джарвис слышит имя даже при шумном фоне.</p>
+      </div>
+      <div class="card">
+        <div class="icon">💤</div>
+        <h3>Напоминание об отдыхе</h3>
+        <p>Следит за временем за компьютером и предложит размяться. Интервал настраивается: «напоминай каждые 30 минут».</p>
+      </div>
+      <div class="card">
+        <div class="icon">🔒</div>
+        <h3>Приватность</h3>
+        <p>Всё распознавание и хранение — на вашем компьютере. Никаких аккаунтов и передачи голоса в облако.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="themes">
+  <div class="wrap">
+    <div class="eyebrow">Темы оформления</div>
+    <h2>10 скинов — выберите свой</h2>
+    <p class="lead">От строгой бирюзы до неонового города: каждую тему сопровождает живая анимированная сцена вокруг орба Джарвиса.</p>
+    <div class="themes">
+      <div class="theme">
+        <div class="sw" style="background:#060a0f"><div class="o" style="background:#35e2c4;box-shadow:0 0 14px #35e2c4"></div></div>
+        <div><h4>Бирюза</h4><p>Классическая тёмная тема</p></div>
+      </div>
+      <div class="theme">
+        <div class="sw" style="background:#070b14"><div class="o" style="background:#5aa2ff;box-shadow:0 0 14px #5aa2ff"></div></div>
+        <div><h4>Полночь</h4><p>Синяя ночь</p></div>
+      </div>
+      <div class="theme">
+        <div class="sw" style="background:#05100c"><div class="o" style="background:#3ce08a;box-shadow:0 0 14px #3ce08a"></div></div>
+        <div><h4>Изумруд</h4><p>Глубокий зелёный</p></div>
+      </div>
+      <div class="theme">
+        <div class="sw" style="background:#100b05"><div class="o" style="background:#ffb454;box-shadow:0 0 14px #ffb454"></div></div>
+        <div><h4>Янтарь</h4><p>Тёплый свет</p></div>
+      </div>
+      <div class="theme">
+        <div class="sw" style="background:#0f060a"><div class="o" style="background:#ff5c8a;box-shadow:0 0 14px #ff5c8a"></div></div>
+        <div><h4>Рубин</h4><p>Красный акцент</p></div>
+      </div>
+      <div class="theme">
+        <div class="sw" style="background:#04100b"><div class="o" style="background:#8ef0ff;box-shadow:0 0 14px #8ef0ff"></div></div>
+        <div><h4>Висп (лес)</h4><p>Сцена леса</p></div>
+      </div>
+      <div class="theme">
+        <div class="sw" style="background:#05070f"><div class="o" style="background:#ffc46b;box-shadow:0 0 14px #ffc46b"></div></div>
+        <div><h4>Солнечная система</h4><p>Планеты и солнце</p></div>
+      </div>
+      <div class="theme">
+        <div class="sw" style="background:#020804"><div class="o" style="background:#33ff88;box-shadow:0 0 14px #33ff88"></div></div>
+        <div><h4>Киберматрица</h4><p>Бегущий код</p></div>
+      </div>
+      <div class="theme">
+        <div class="sw" style="background:#070310"><div class="o" style="background:#ff2ea6;box-shadow:0 0 14px #ff2ea6"></div></div>
+        <div><h4>Неоновый город</h4><p>Дождь и неон</p></div>
+      </div>
+      <div class="theme">
+        <div class="sw" style="background:#eef2f6"><div class="o" style="background:#0f9f8a;box-shadow:0 0 14px #0f9f8a"></div></div>
+        <div><h4>Светлая</h4><p>Дневная версия</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="voice">
+  <div class="wrap">
+    <div class="eyebrow">Голос</div>
+    <h2>Говорит как человек</h2>
+    <p class="lead">Два режима голоса, которые Джарвис выбирает сам по скорости интернета.</p>
+    <div class="voice">
+      <div class="card">
+        <h3>Дмитрий <span class="badge live">живой голос</span></h3>
+        <p>Нейросетевой мужской голос (Microsoft Neural). Звучит естественно: интонация, темп, нюансы. Используется при скорости интернета от 7 Мбит/с.</p>
+      </div>
+      <div class="card">
+        <h3>Системный голос <span class="badge off">офлайн</span></h3>
+        <p>При медленном интернете или без сети Джарвис автоматически переключается на встроенный голос Windows. Ассистент никогда не замолкает.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="commands">
+  <div class="wrap">
+    <div class="eyebrow">Голосовые команды</div>
+    <h2>Примеры команд</h2>
+    <p class="lead">Джарвис понимает разговорную речь — учить точные фразы не нужно.</p>
+    <div class="commands">
+      <div class="cmd"><code>«Джарвис, запусти стим»</code></div>
+      <div class="cmd"><code>«Джарвис, какая погода»</code></div>
+      <div class="cmd"><code>«Джарвис, погода на завтра»</code></div>
+      <div class="cmd"><code>«Джарвис, новости»</code></div>
+      <div class="cmd"><code>«Джарвис, доброе утро»</code></div>
+      <div class="cmd"><code>«Джарвис, сделай скриншот»</code></div>
+      <div class="cmd"><code>«Джарвис, сделай тише»</code></div>
+      <div class="cmd"><code>«Джарвис, сколько времени»</code></div>
+      <div class="cmd"><code>«Джарвис, выключи компьютер»</code></div>
+      <div class="cmd"><code>«Джарвис, режим игра»</code></div>
+    </div>
+  </div>
+</section>
+
+<section id="start">
+  <div class="wrap">
+    <div class="eyebrow">Установка</div>
+    <h2>Как установить на своё устройство</h2>
+    <p class="lead">ПК — распакуйте и запустите. Телефон — откройте файл и установите на главный экран.</p>
+    <div class="steps">
+      <div class="step">
+        <h4>Выберите версию</h4>
+        <p>Для компьютера — карточка «Джарвис для ПК», для телефона — «Джарвис Mobile».</p>
+      </div>
+      <div class="step">
+        <h4>ПК: распакуйте и запустите</h4>
+        <p>Откройте ZIP и запустите «Джарвис.exe». Windows может спросить подтверждение — «Выполнить в любом случае».</p>
+      </div>
+      <div class="step">
+        <h4>Телефон: распакуйте и откройте</h4>
+        <p>Распакуйте ZIP, откройте файл «index.html» в Chrome. Нажмите «Установить приложение» в меню браузера — Джарвис появится на главном экране.</p>
+      </div>
+      <div class="step">
+        <h4>Скажите «Джарвис»</h4>
+        <p>Ассистент поздоровается и начнёт слушать. На телефоне — нажмите кнопку микрофона и скажите команду.</p>
+      </div>
+    </div>
+    <div style="text-align:center; margin-top: 44px;">
+      <a class="btn primary" href="#download">Выбрать и скачать версию</a>
+      <p style="color:var(--muted); font-size:13px; margin-top:12px;">ПК: Windows 10/11 · Телефон: Android/iPhone через Chrome · Русский язык</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="brand"><span class="dot" style="background:var(--accent)"></span>JARVIS</div>
+    <p>Голосовой ассистент для Windows и телефона · Офлайн-распознавание · 10 тем оформления</p>
+  </div>
+</footer>
+
+</body>
+</html>
